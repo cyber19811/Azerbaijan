@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Neon Temalı Çok Sayfalı Site + Sohbet Botu</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f0f0f;
+      color: #f0f0f0;
+      overflow-x: hidden;
+    }
+    header, footer {
+      background-color: #111;
+      text-align: center;
+      padding: 1rem;
+      border-bottom: 2px solid #f00; /* kırmızı */
+      box-shadow: 0 0 20px #f00; /* kırmızı */
+    }
+    h1 {
+      color: #f00;
+      text-shadow: 0 0 5px #f00;
+    }
+    #live-clock {
+      font-size: 1.2rem;
+      color: #f00;
+      margin-top: 0.5rem;
+      text-shadow: 0 0 5px #f00;
+    }
+    .side-buttons-left {
+      position: fixed;
+      top: 100px;
+      left: 10px;
+      display: flex;
+      flex-direction: column;
+      z-index: 10;
+    }
+    .side-buttons-left .btn {
+      background-color: transparent;
+      color: #f00;
+      border: 2px solid #f00;
+      padding: 10px;
+      margin: 5px 0;
+      cursor: pointer;
+      transition: 0.3s;
+      font-weight: bold;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #f00;
+    }
+    .side-buttons-left .btn:hover,
+    .side-buttons-left .btn.active {
+      background-color: #f00;
+      color: #000;
+    }
+    .led-strip {
+      position: fixed;
+      top: 0;
+      height: 100%;
+      width: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      z-index: 5;
+    }
+    .led-strip.left {
+      left: 0;
+    }
+    .led-strip.right {
+      right: 0;
+    }
+    .led-light {
+      width: 10px;
+      height: 10px;
+      background-color: #f00;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #f00;
+      margin: 10px 0;
+    }
+    main {
+      margin: 2rem auto;
+      max-width: 900px;
+      padding: 1rem;
+      background-color: #1a1a1a;
+      border-radius: 12px;
+      box-shadow: 0 0 20px #f00 inset;
+    }
+    main img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-top: 1rem;
+      box-shadow: 0 0 15px #f00;
+    }
+    footer {
+      margin-top: 2rem;
+      border-top: 2px solid #f00;
+    }
+    #chat-toggle-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background-color: #f00;
+      color: #000;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      box-shadow: 0 0 15px #f00;
+      cursor: pointer;
+      z-index: 20;
+    }
+    #chat-box {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 300px;
+      max-height: 400px;
+      background-color: #111;
+      border: 2px solid #f00;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #f00;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 20;
+    }
+    #chat-header {
+      background-color: #f00;
+      color: #000;
+      padding: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+    #chat-messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      font-size: 14px;
+      color: #f00;
+    }
+    .message {
+      margin: 5px 0;
+      padding: 6px 10px;
+      border-radius: 10px;
+      max-width: 80%;
+      font-weight: 600;
+    }
+    .message.user {
+      background-color: #f00;
+      color: #000;
+      align-self: flex-end;
+      margin-left: auto;
+    }
+    .message.bot {
+      background-color: #333;
+      color: #f00;
+      align-self: flex-start;
+    }
+    #chat-input-container {
+      display: flex;
+      border-top: 1px solid #f00;
+    }
+    #chat-input {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      background-color: #222;
+      color: #f00;
+    }
+    #chat-send {
+      padding: 8px 12px;
+      background-color: #f00;
+      border: none;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #chat-send:hover {
+      background-color: #a00;
+    }
+
+    /* Paylaşımlar sayfası içindeki görseller için */
+    .shares-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .shares-item {
+      width: 150px;
+      text-align: center;
+    }
+    .shares-item img {
+      width: 100%;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #f00;
+      transition: transform 0.3s ease;
+      cursor: pointer;
+    }
+    .shares-item img:hover {
+      transform: scale(1.05);
+    }
+    .shares-item p {
+      margin-top: 5px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Xoş Gəlmisiniz</h1>
+  <div id="live-clock">00:00:00</div>
+</header>
+
+<div class="led-strip left">
+  <div class="led-light"></div><div class="led-light"></div><div class="led-light"></div>
+  <div class="led-light"></div><div class="led-light"></div><div class="led-light"></div>
+</div>
+<div class="led-strip right">
+  <div class="led-light"></div><div class="led-light"></div><div class="led-light"></div>
+  <div class="led-light"></div><div class="led-light"></div><div class="led-light"></div>
+</div>
+
+<div class="side-buttons-left">
+  <button type="button" class="btn active" data-page="home">Ana Sayfa</button>
+  <button type="button" class="btn" data-page="about">Hakkında</button>
+  <button type="button" class="btn" data-page="projects">Projeler</button>
+  <button type="button" class="btn" data-page="shares">Paylaşımlar</button>
+</div>
+
+<main id="content-area"></main>
+
+<footer>
+  &copy; Xoş Gəlmisiniz 2025
+</footer>
+
+<button id="chat-toggle-btn" title="Sohbeti Aç/Kapat">💬</button>
+<div id="chat-box">
+  <div id="chat-header">Sohbet Botu</div>
+  <div id="chat-messages"></div>
+  <div id="chat-input-container">
+    <input type="text" id="chat-input" placeholder="Mesajınızı yazın..." autocomplete="off" />
+    <button id="chat-send">Gönder</button>
+  </div>
+</div>
+
+<script>
+  // Saat güncelleme
+  function updateClock() {
+    const clock = document.getElementById('live-clock');
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    const s = String(now.getSeconds()).padStart(2, '0');
+    clock.textContent = `${h}:${m}:${s}`;
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Sayfalar içeriği
+  const pages = {
+    home: `
+      <h2>Ana Sayfa</h2>
+      <p>Xoş Gəlmisiniz</p>
+      <img src="" alt="" />
+    `,
+    about: `
+      <h2>Haqqında</h2>
+      <p>Burada kendinizle ilgili bilgi verebilirsiniz.</p>
+      <img src="" alt="" />
+    `,
+    projects: `
+      <h2>Projeler</h2>
+      <ul>
+        <li><b>Proje 1:</b> Web Tasarımı</li>
+        <li><b>Proje 2:</b> Sohbet Botu</li>
+        <li><b>Proje 3:</b> Mobil Uygulama</li>
+      </ul>
+      <img src="" alt="" />
+      <div style="margin-top: 20px;">
+        <h3>Instagram Sayfam</h3>
+        <p>Aşağıdaki bağlantıya tıklayarak Instagram profilimi ziyaret edebilirsiniz:</p>
+        <a href="https://www.instagram.com/emiloffiical/" target="_blank" style="color: #f00; font-weight: bold; text-decoration: underline;">
+          👉 @emiloffiical
+        </a>
+      </div>
+    `,
+    shares: `
+      <h2>Paylaşımlar</h2>
+      <p>Burada en son paylaşımlarım ve görsellerim yer alıyor.</p>
+      <div class="shares-gallery">
+        <div class="shares-item">
+          <img src="https://picsum.photos/id/1015/150/100" alt="Doğa Fotoğrafı" />
+          <p>Doğa Fotoğrafı</p>
+        </div>
+        <div class="shares-item">
+          <img src="file:///C:/Users/enesi/Downloads/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-06-14%20233303.png" alt="Şehir Manzarası" />
+          <p>Şehir Manzarası</p>
+        </div>
+        <div class="shares-item">
+          <img src="file:///C:/Users/enesi/Downloads/Ekran%20g%C3%B6r%C3%BCnt%C3%BCs%C3%BC%202025-06-14%20233211.png" alt="Kumsal ve Deniz" />
+          <p>Kumsal ve Deniz</p>
+        </div>
+      </div>
+    `
+  };
+
+  // Sayfa yükleme
+  const contentArea = document.getElementById('content-area');
+  function loadPage(page) {
+    contentArea.innerHTML = pages[page] || '<h2>Sayfa Bulunamadı</h2><p>İlgili sayfa içeriği bulunamadı.</p>';
+  }
+  loadPage('home');
+
+  // Menü butonlarının aktiflik ve sayfa yükleme işlemi
+  document.querySelectorAll('.btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadPage(btn.dataset.page);
+    });
+  });
+
+  // Sohbet butonu ve kutusu
+  const chatToggleBtn = document.getElementById('chat-toggle-btn');
+  const chatBox = document.getElementById('chat-box');
+  chatToggleBtn.addEventListener('click', () => {
+    chatBox.style.display = chatBox.style.display === 'flex' ? 'none' : 'flex';
+  });
+
+  // Sohbet fonksiyonları
+  const chatMessages = document.getElementById('chat-messages');
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+
+  function addMessage(sender, text) {
+    const div = document.createElement('div');
+    div.classList.add('message', sender);
+    div.textContent = text;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function botResponse(msg) {
+    const lower = msg.toLowerCase();
+    if (lower.includes("merhaba")) return "Merhaba! Size nasıl yardımcı olabilirim?";
+    if (lower.includes("nasılsın")) return "İyiyim, teşekkür ederim! Siz nasılsınız?";
+    if (lower.includes("teşekkür")) return "Rica ederim!";
+    if (lower.includes("projeler")) return "Projeler sayfasına yan menüden ulaşabilirsiniz.";
+    return "Üzgünüm, bunu anlayamadım. Başka bir şey deneyebilir misiniz?";
+  }
+
+  function sendMessage() {
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    addMessage('user', msg);
+    chatInput.value = '';
+    setTimeout(() => {
+      addMessage('bot', botResponse(msg));
+    }, 800);
+  }
+
+  chatSend.addEventListener('click', sendMessage);
+  chatInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') sendMessage();
+  });
+</script>
+
+</body>
+</html>
